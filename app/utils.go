@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
 	"strings"
 )
 
@@ -30,6 +31,16 @@ func requestHandler(conn net.Conn) {
 	} else if strings.Split(splitedRequestLine[1], "/")[1] == "user-agent" {
 		param := strings.Split(splitedUserAgent[1], ":")[0]
 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(param), param)))
+	} else if strings.Split(splitedRequestLine[1], "/")[1] == "files" {
+		dir := os.Args[2]
+		fileName := strings.Split(splitedRequestLine[1], "/")[2]
+		data, err := os.ReadFile(dir + fileName)
+		if err != nil {
+			conn.Write([]byte(status404))
+		} else {
+			conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type:application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", len(data), data)))
+		}
+
 	} else {
 		conn.Write([]byte(status404))
 		return
