@@ -21,15 +21,24 @@ func requestHandler(conn net.Conn) {
 	splitedHeader := strings.Split(string(buffer), "\r\n")
 	splitedRequestLine := strings.Split(splitedHeader[0], " ")
 	splitedUserAgent := strings.Split(splitedHeader[2], " ")
-	splitedAcceptEncoding := "flase"
+
+	var splitedAcceptEncoding []string
+	encoded := false
 	for _, header := range splitedHeader {
 		if strings.HasPrefix(header, "Accept-Encoding") {
-			splitedAcceptEncoding = strings.Split(header, " ")[1]
+			splitedAcceptEncoding = strings.Split(header[len("Accept-Encoding: "):], ",")
+			break
+
+		}
+	}
+	for _, encoding := range splitedAcceptEncoding {
+		if strings.TrimSpace(encoding) == "gzip" {
+			encoded = true
+			break
 		}
 	}
 
-	// fmt.Println(splitedRequestLine[0])
-	if splitedAcceptEncoding == "gzip" {
+	if encoded {
 		if splitedRequestLine[0] == "GET" {
 
 			if splitedRequestLine[1] == "/" {
