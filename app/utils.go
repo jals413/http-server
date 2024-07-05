@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"net"
 	"os"
@@ -46,7 +48,12 @@ func requestHandler(conn net.Conn) {
 				return
 			} else if strings.Split(splitedRequestLine[1], "/")[1] == "echo" {
 				param := strings.Split(splitedRequestLine[1], "/")[2]
-				conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: %d\r\n\r\n%s", len(param), param)))
+				var buffer bytes.Buffer
+				encoder := gzip.NewWriter(&buffer)
+				encoder.Write([]byte(param))
+				encoder.Close()
+
+				conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: %d\r\n\r\n%s", len(buffer.String()), buffer.String())))
 				return
 
 			} else if strings.Split(splitedRequestLine[1], "/")[1] == "user-agent" {
